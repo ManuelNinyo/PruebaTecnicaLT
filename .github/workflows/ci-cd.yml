@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master, main, develop ]
 
+permissions:
+  checks: write
+  contents: read
+
 env:
   JAVA_VERSION: '21'
   MAVEN_OPTS: '-Xmx2048m'
