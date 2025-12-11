@@ -9,6 +9,8 @@ on:
 permissions:
   checks: write
   contents: read
+  pages: write
+  id-token: write
 
 env:
   JAVA_VERSION: '21'
@@ -108,4 +110,42 @@ jobs:
         name: security-report
         path: target/dependency-check-report.html
         retention-days: 30
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: clientApp/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./clientApp
+      run: npm ci
+    
+    - name: Build for production
+      working-directory: ./clientApp
+      run: npm run build
+      env:
+        VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: clientApp/dist
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
 
